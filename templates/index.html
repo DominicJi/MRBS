@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block page-css%}
+    <style>
+        .own_booked{
+            background-color: green;
+        }
+        .another_booked{
+            background-color: yellow;
+        }
+        .td_active {
+            background-color: orange;
+        }
+    </style>
+{% endblock %}
+{% block page-main %}
+    <div class="container">
+        <div class="row">
+            <div class="page-header">
+                <h1>会议室预订</h1>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><span class="glyphicon glyphicon-user"></span></h3>
+                        </div>
+
+                        <div class="panel-body b1">
+                                    <div class="calender pull-right">
+      <div class='input-group' style="width: 230px;">
+            <input type='text' class="form-control" id='datetimepicker11' placeholder="请选择日期"/>
+            <span class="input-group-addon">
+                <span class="glyphicon glyphicon-calendar">
+                </span>
+            </span>
+
+      </div>
+</div>
+
+                                <table class="table table-striped table-hover table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>会议室/时间</th>
+                                            {% for time in time_choices %}
+                                                <th>{{ time.1 }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                           {{ html|safe }}
+                                    </tbody>
+                                </table>
+                                <input type="button" class="btn btn-info pull-right" value="预订" id="btn">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    //  设计日期转换方法
+    Date.prototype.Format = function (fmt) { //author: meizz
+            var o = {
+                "M+": this.getMonth() + 1, //月份
+                "d+": this.getDate(), //日
+                "h+": this.getHours(), //小时
+                "m+": this.getMinutes(), //分
+                "s+": this.getSeconds(), //秒
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+                "S": this.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        };
+    $(function () {
+           $('#datetimepicker11').datetimepicker({
+                minView: "month",
+                language: "zh-CN",
+                sideBySide: true,
+                format: 'yyyy-mm-dd',
+                startDate: new Date(),
+                bootcssVer: 3,
+                autoclose: true,
+
+            }).on('changeDate', book_query);
+     });
+
+     function book_query(event) {
+         date=event.date.Format("yyyy-MM-dd");
+         console.log(date);
+         location.href="/index/?choose_date="+date
+     }
+
+
+
+
+    //自由区域预订事件
+    $("body").on('click','.free',function () {
+        $(this).toggleClass('td_active');
+    });
+    //取消预定事件
+    $('.own_booked').click(function () {
+        $(this).removeClass('own_booked').html('');
+        $(this).addClass('cancel_td');
+    });
+    //数据格式构建
+    //这里对于一个会议室来说，他可以有很多预订状态
+    //同样它也有取消预定的状态
+    //合适的数据结构
+    /*
+    {
+        'ADD':{
+            room_id:[]
+    }
+        'DEL':{
+            room_id:[]
+    }
+    }
+    */
+    var POST_DATA={
+        "ADD":{},
+        "DEL":{}
+    };
+    //提交标签绑定事件
+    $("#btn").click(function () {
+        //构建添加预定数据,我们事先给所有的空白被点击的标签增加了一个标识属性类，有这个属性表示用户想预定该栏
+        $(".td_active").each(function (index,ele) {
+            var room_id=$(ele).attr('room_id');
+            var time_id=$(ele).attr('time_id');
+            if (POST_DATA.ADD.hasOwnProperty(room_id)){
+                POST_DATA.ADD[room_id].push(time_id)
+            }else {
+                POST_DATA.ADD[room_id]=[time_id]
+            }
+        });
+        //构建取消预定数据
+        $(".cancel_td").each(function (index,ele) {
+            var room_id=$(ele).attr('room_id');
+            var time_id=$(ele).attr('time_id');
+            if (POST_DATA.DEL.hasOwnProperty(room_id)){
+                POST_DATA.DEL[room_id].push(time_id)
+            }else {
+                POST_DATA.DEL[room_id]=[time_id]
+            }
+        });
+        //获取操作日期对象
+        var date;
+        if (location.search.slice(13)){
+            date=location.search.slice(13)
+        }else {
+            date=new Date().Format('yyyy-MM-dd')
+        }
+        //发送ajax请求
+        $.ajax({
+            url:'/book/',
+            type:'post',
+            data:{
+                post_data:JSON.stringify(POST_DATA),
+                date:date
+            },
+            success:function (data) {
+                if (data.flag){
+                    //刷新页面
+                    location.href=''
+                }
+            }
+
+        })
+    })
+    </script>
+{% endblock %}

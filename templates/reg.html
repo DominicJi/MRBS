@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block page-main %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-lg-offset-3">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    {{ form_list.as_p }}
+                <input type="submit" value="注册">
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

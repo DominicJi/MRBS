@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block page-main %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-lg-offset-2">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <label for="i1">用户名</label>
+                    <input id="i1" type="text" name="name" class="form-control">
+                    <label for="i2">密码</label>
+                    <input id="i2" type="password" name="pwd" class="form-control">
+                    <input type="submit" value="登陆">
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
